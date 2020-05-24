@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/go-chi/chi"
 	"go-blog/internal/config"
+	"go-blog/internal/db"
 	"net/http"
 )
 
@@ -10,6 +11,7 @@ func Run() error {
 
 	config.ReadConfig()
 
+	db.OpenConnection()
 
 	r := chi.NewRouter()
 
