@@ -6,7 +6,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
-	"promotion-management-api/internal/config"
+	"go-blog/internal/config"
 )
 
 var db *sql.DB
