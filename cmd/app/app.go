@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"go-blog/internal/config"
 	"go-blog/internal/db"
@@ -15,6 +16,10 @@ func Run() error {
 	db.OpenConnection()
 
 	r := chi.NewRouter()
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"},
