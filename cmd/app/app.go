@@ -4,6 +4,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
+	log "github.com/sirupsen/logrus"
+	"go-blog/internal/blog"
 	"go-blog/internal/config"
 	"go-blog/internal/db"
 	"net/http"
@@ -31,8 +33,21 @@ func Run() error {
 	})
 	r.Use(c.Handler)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("welcome"))
+	r.Route("/v1", func(r chi.Router) {
+		r.Route("/", func(r chi.Router) {
+			r.Route("/blog", func(r chi.Router) {
+				r.Get("/", blog.RouterList)
+				//r.Post("/", blog.RouterCreate)
+				//
+				//r.Route("/{id}", func(r chi.Router) {
+				//	r.Get("/", blog.RouterRead)
+				//	r.Put("/", blog.RouterUpdate)
+				//	r.Delete("/", blog.RouterDelete)
+				//})
+			})
+		})
 	})
-	return http.ListenAndServe(":3000", r)
+
+	log.Printf("Running at port 80")
+	return http.ListenAndServe(":80", r)
 }
