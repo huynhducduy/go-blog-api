@@ -39,11 +39,11 @@ func Run() error {
 				r.Get("/", blog.RouterList)
 				//r.Post("/", blog.RouterCreate)
 				//
-				//r.Route("/{id}", func(r chi.Router) {
-				//	r.Get("/", blog.RouterRead)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Get("/", blog.RouterRead)
 				//	r.Put("/", blog.RouterUpdate)
 				//	r.Delete("/", blog.RouterDelete)
-				//})
+				})
 			})
 		})
 	})
