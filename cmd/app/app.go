@@ -1,14 +1,15 @@
 package app
 
 import (
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/go-chi/cors"
-	log "github.com/sirupsen/logrus"
 	"go-blog/internal/blog"
 	"go-blog/internal/config"
 	"go-blog/internal/db"
 	"net/http"
+
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
+	log "github.com/sirupsen/logrus"
 )
 
 func Run() error {
@@ -37,12 +38,12 @@ func Run() error {
 		r.Route("/", func(r chi.Router) {
 			r.Route("/blog", func(r chi.Router) {
 				r.Get("/", blog.RouterList)
-				//r.Post("/", blog.RouterCreate)
-				//
+				r.Post("/", blog.RouterCreate)
+
 				r.Route("/{id}", func(r chi.Router) {
 					r.Get("/", blog.RouterRead)
-				//	r.Put("/", blog.RouterUpdate)
-				//	r.Delete("/", blog.RouterDelete)
+					r.Put("/", blog.RouterUpdate)
+					r.Delete("/", blog.RouterDelete)
 				})
 			})
 		})
