@@ -59,3 +59,33 @@ func Read(id int) (*Blog, error) {
 
 	return &blog, err
 }
+
+func Create(blog Blog) (int64, error) {
+	db := db.GetConnection()
+
+	results, err := db.Exec("INSERT INTO `blogs` (`title`, `content`, `description`, `slug`, `image`, `created_at`) VALUES (?,?,?,?,?,?)", blog.Title, blog.Content, blog.Description, blog.Slug, blog.Image, blog.CreatedAt)
+	if err != nil {
+		return 0, err
+	}
+
+	lid, err := results.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return lid, nil
+}
+
+func Update(blog Blog) error {
+	db := db.GetConnection()
+
+	_, err := db.Exec("UPDATE `blogs` SET `title` = ?, `description` = ?, `slug` = ?, `image` = ?, `content` = ?, `created_at` = ?", blog.Title, blog.Description, blog.Slug, blog.Image, blog.Content, blog.CreatedAt)
+	return err
+}
+
+func Delete(id int64) error {
+	db := db.GetConnection()
+
+	_, err := db.Exec("DELETE FROM `blogs` WHERE `ID` = ?", id)
+	return err
+}

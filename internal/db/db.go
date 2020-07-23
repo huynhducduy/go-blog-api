@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"time"
 
+	"go-blog/internal/config"
+
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
-	"go-blog/internal/config"
 )
 
 var db *sql.DB
