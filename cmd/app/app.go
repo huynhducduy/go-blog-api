@@ -46,7 +46,7 @@ func Run() error {
 			r.Group(func(r chi.Router) {
 				r.Use(auth.AuthenticationMiddleware)
 				r.Get("/profile", auth.Profile)
-				r.Post("/profile", auth.UpdateProfile)
+				r.Put("/profile", auth.UpdateProfile)
 				r.Post("/profile/password", auth.ChangeProfilePassword)
 			})
 		})
@@ -77,7 +77,7 @@ func Run() error {
 			r.Get("/", user.RouterList)
 
 			r.Route("/{id}", func(r chi.Router) {
-				//r.Get("/", user.RouterRead)
+				r.Get("/", user.RouterRead)
 				//r.Get("/blog", user.RouterListBlog)
 			})
 		})
