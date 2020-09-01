@@ -29,8 +29,8 @@ type Credential struct {
 }
 
 type Claims struct {
-	Id        int64
-	ExpiresAt int64
+	Id        int64 `json:"id"`
+	ExpiresAt int64 `json:"expires_at"`
 	jwt.StandardClaims
 }
 
@@ -212,6 +212,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	//}
 }
 
-func GetPwd(w http.ResponseWriter, r *http.Request) {
-	utils.ResponseMessage(w, 200, hashAndSalt("password123"))
-}
+//func GetPwd(w http.ResponseWriter, r *http.Request) {
+//	utils.ResponseMessage(w, 200, hashAndSalt("password123"))
+//}

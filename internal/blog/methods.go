@@ -22,8 +22,9 @@ func List(cursor int, filter BlogFilter, sortMethod BlogSortMethod) ([]BlogExtra
 	variables := make([]interface{}, 0)
 
 	if filter.Title != nil {
-		queryString += " AND `b`.`title` LIKE '%?%'"
-		variables = append(variables, filter.Title)
+		queryString += " AND `b`.`title` LIKE ?"
+		queryVar := "%" + *filter.Title + "%"
+		variables = append(variables, queryVar)
 	}
 
 	if filter.UserId != 0 {
@@ -34,8 +35,8 @@ func List(cursor int, filter BlogFilter, sortMethod BlogSortMethod) ([]BlogExtra
 	if filter.Tags != nil {
 		for _, v := range strings.Split(*filter.Tags, ",") {
 			if v != "" {
-				queryString += " AND `b`.`tags` LIKE '%,?,%'"
-				variables = append(variables, v)
+				queryString += " AND `b`.`tags` LIKE ?"
+				variables = append(variables, "%," + v + ",%")
 			}
 		}
 	}
@@ -105,6 +106,9 @@ func Read(id int) (*BlogExtra, error) {
 func Create(blog Blog) (int64, error) {
 	db := db.GetConnection()
 
+	var newTags = "," + strings.Trim(*blog.Tags,",") + ","
+	blog.Tags = &newTags
+
 	results, err := db.Exec("INSERT INTO `blogs` (`title`, `content`, `description`, `slug`, `image`, `created_at`, `user_id`, `tags`) VALUES (?,?,?,?,?,?)", blog.Title, blog.Content, blog.Description, blog.Slug, blog.Image, blog.CreatedAt, blog.UserId, blog.Tags)
 	if err != nil {
 		return 0, err
@@ -128,6 +132,9 @@ func Create(blog Blog) (int64, error) {
 
 func Update(blog Blog) error {
 	db := db.GetConnection()
+
+	var newTags = "," + strings.Trim(*blog.Tags,",") + ","
+	blog.Tags = &newTags
 
 	_, err := db.Exec("UPDATE `blogs` SET `title` = ?, `description` = ?, `slug` = ?, `image` = ?, `content` = ?, `created_at` = ?, `user_id` = ?, `tags` = ? WHERE `id` = ?", blog.Title, blog.Description, blog.Slug, blog.Image, blog.Content, blog.CreatedAt, blog.UserId, blog.Tags, blog.Id)
 	return err

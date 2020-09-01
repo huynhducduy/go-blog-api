@@ -39,11 +39,17 @@ func Run() error {
 	r.Use(c.Handler)
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/", auth.GetPwd)
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/login", auth.Login)
+			r.Post("/register", auth.Register)
 
-		r.Post("/login", auth.Login)
 
-		r.With(auth.AuthenticationMiddleware).Get("/me", user.RouterMe)
+			r.Group(func(r chi.Router) {
+				r.Use(auth.AuthenticationMiddleware)
+				r.Get("/me", user.RouterMe)
+				//r.Post("/me", user.RouterChangeInfo)
+			})
+		})
 
 		r.Route("/blog", func(r chi.Router) {
 			r.Get("/", blog.RouterList)
@@ -64,6 +70,15 @@ func Run() error {
 				//		r.Delete("/", reply.RouterDelete)
 				//	})
 				//})
+			})
+		})
+
+		r.Route("/user", func(r chi.Router) {
+			r.Get("/", user.RouterList)
+
+			r.Route("/{id}", func(r chi.Router) {
+				//r.Get("/", user.RouterRead)
+				//r.Get("/blog", user.RouterListBlog)
 			})
 		})
 

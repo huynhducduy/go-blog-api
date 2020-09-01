@@ -40,6 +40,7 @@ func RouterList(w http.ResponseWriter, r *http.Request) {
 			filter.UserId = userId
 		} else {
 			utils.ResponseMessage(w, http.StatusBadRequest, "User's ID must be a number!")
+			return
 		}
 
 	}

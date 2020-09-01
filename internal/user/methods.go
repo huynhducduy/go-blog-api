@@ -9,7 +9,7 @@ import (
 func List() ([]User, error) {
 	db := db.GetConnection()
 
-	results, err := db.Query("SELECT `id`, `name`, `username`, `email` FROM `users`")
+	results, err := db.Query("SELECT `id`, `name`, `username`, `email`, `role` FROM `users`")
 	if err != nil {
 		return nil, err
 	}
@@ -20,7 +20,7 @@ func List() ([]User, error) {
 	for results.Next() {
 		var emp User
 
-		err = results.Scan(&emp.Id, &emp.Name, &emp.Username, &emp.Email)
+		err = results.Scan(&emp.Id, &emp.Name, &emp.Username, &emp.Email, &emp.Role)
 		if err != nil {
 			return nil, err
 		}
@@ -37,7 +37,7 @@ func Read(id int64) (*User, error) {
 	db := db.GetConnection()
 
 	results := db.QueryRow("SELECT `id`, `name`, `username`, `email`, `role` FROM `users` WHERE `id` = ? ", id)
-	err := results.Scan(&emp.Id, &emp.Name, &emp.Username, &emp.Email)
+	err := results.Scan(&emp.Id, &emp.Name, &emp.Username, &emp.Email, &emp.Role)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("Invalid id.")
 	} else if err != nil {
