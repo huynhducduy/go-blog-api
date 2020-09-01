@@ -66,8 +66,30 @@ func Create(user User) (int64, error) {
 func Update(user User) error {
 	db := db.GetConnection()
 
-	_, err := db.Exec("UPDATE `users` SET `name` = ?, `username` = ?, `email` = ?, `role` = ?, `password` = ? WHERE `id` = ?", user.Name, user.Username, user.Email, user.Role, user.Password, user.Id)
+	_, err := db.Exec("UPDATE `users` SET `name` = ?, `username` = ?, `email` = ? WHERE `id` = ?", user.Name, user.Username, user.Email, user.Id)
 	return err
+}
+
+func UpdatePassword(user User) error {
+	db := db.GetConnection()
+
+	_, err := db.Exec("UPDATE `users` SET `password` = ? WHERE `id` = ?", user.Password, user.Id)
+	return err
+}
+
+func ReadPassword(id int64) (string, error) {
+	var password string
+	db := db.GetConnection()
+
+	results := db.QueryRow("SELECT `password` FROM `users` WHERE `id` = ? ", id)
+	err := results.Scan(&password)
+	if err == sql.ErrNoRows {
+		return "", errors.New("Invalid id.")
+	} else if err != nil {
+		return "", err
+	}
+
+	return password, nil
 }
 
 func Delete(id int64) error {

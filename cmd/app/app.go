@@ -43,11 +43,11 @@ func Run() error {
 			r.Post("/login", auth.Login)
 			r.Post("/register", auth.Register)
 
-
 			r.Group(func(r chi.Router) {
 				r.Use(auth.AuthenticationMiddleware)
-				r.Get("/me", user.RouterMe)
-				//r.Post("/me", user.RouterChangeInfo)
+				r.Get("/profile", auth.Profile)
+				r.Post("/profile", auth.UpdateProfile)
+				r.Post("/profile/password", auth.ChangeProfilePassword)
 			})
 		})
 

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	firebase "firebase.google.com/go"
+	"github.com/go-sql-driver/mysql"
 	"go-blog/internal/db"
 	"go-blog/internal/user"
 	"golang.org/x/crypto/bcrypt"
@@ -205,11 +206,83 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {
-	//reqBody, err := ioutil.ReadAll(r.Body)
-	//if err != nil {
-	//	utils.ResponseInternalError(w, err)
-	//	return
-	//}
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		utils.ResponseInternalError(w, err)
+		return
+	}
+
+	var newUser user.User
+	json.Unmarshal(reqBody, &newUser)
+
+	newUser.Role = nil
+	newPassword := hashAndSalt(*newUser.Password)
+	newUser.Password = &newPassword
+
+	id, err := user.Create(newUser)
+	if err != nil {
+		if err.(*mysql.MySQLError).Number == 1062 {
+			utils.ResponseMessage(w, http.StatusBadRequest, "Email or username is already used!")
+			return
+		}
+		utils.ResponseInternalError(w, err)
+		return
+	}
+
+	utils.ResponseCreated(w, id)
+}
+
+func Profile(w http.ResponseWriter, r *http.Request) {
+	usr := r.Context().Value("user").(*user.User)
+	utils.Response(w, 200, usr)
+}
+
+func UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	usr := r.Context().Value("user").(*user.User)
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		utils.ResponseInternalError(w, err)
+		return
+	}
+
+	json.Unmarshal(reqBody, &usr)
+
+	err = user.Update(*usr)
+	if err != nil {
+		utils.ResponseInternalError(w, err)
+		return
+	}
+
+	utils.ResponseMessage(w, http.StatusOK, "Update profile success!")
+}
+
+
+func ChangeProfilePassword(w http.ResponseWriter, r *http.Request) {
+	usr := r.Context().Value("user").(*user.User)
+	reqBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		utils.ResponseInternalError(w, err)
+		return
+	}
+
+	json.Unmarshal(reqBody, &usr)
+	password := hashAndSalt(*usr.Password)
+	usr.Password = &password
+
+	oldPasswordFromDB, err := user.ReadPassword(*usr.Id)
+	if err != nil {
+		utils.ResponseInternalError(w, err)
+		return
+	}
+
+	if !comparePasswords(oldPasswordFromDB, *usr.OldPassword) {
+		utils.ResponseMessage(w, http.StatusNotFound, "Old password is incorrect")
+		return
+	}
+
+	err = user.UpdatePassword(*usr)
+
+	utils.ResponseMessage(w, http.StatusOK, "Update password success!")
 }
 
 //func GetPwd(w http.ResponseWriter, r *http.Request) {
