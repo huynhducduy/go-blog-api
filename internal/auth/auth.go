@@ -249,6 +249,10 @@ func UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	err = user.Update(*usr)
 	if err != nil {
+		if err.(*mysql.MySQLError).Number == 1062 {
+			utils.ResponseMessage(w, http.StatusBadRequest, "Email or username is already used!")
+			return
+		}
 		utils.ResponseInternalError(w, err)
 		return
 	}
