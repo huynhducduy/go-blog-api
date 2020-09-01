@@ -1,7 +1,11 @@
 package app
 
 import (
+	"go-blog/internal/auth"
 	"go-blog/internal/blog"
+	//"go-blog/internal/tag"
+	"go-blog/internal/user"
+	//"go-blog/internal/blog/reply"
 	"go-blog/internal/config"
 	"go-blog/internal/db"
 	"net/http"
@@ -35,18 +39,49 @@ func Run() error {
 	r.Use(c.Handler)
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Route("/", func(r chi.Router) {
-			r.Route("/blog", func(r chi.Router) {
-				r.Get("/", blog.RouterList)
-				r.Post("/", blog.RouterCreate)
+		r.Get("/", auth.GetPwd)
 
-				r.Route("/{id}", func(r chi.Router) {
-					r.Get("/", blog.RouterRead)
-					r.Put("/", blog.RouterUpdate)
-					r.Delete("/", blog.RouterDelete)
-				})
+		r.Post("/login", auth.Login)
+
+		r.With(auth.AuthenticationMiddleware).Get("/me", user.RouterMe)
+
+		r.Route("/blog", func(r chi.Router) {
+			r.Get("/", blog.RouterList)
+			r.With(auth.AuthenticationMiddleware).Post("/", blog.RouterCreate)
+
+			r.Route("/{id}", func(r chi.Router) {
+				r.Get("/", blog.RouterRead)
+
+				r.With(auth.AuthenticationMiddleware).Put("/", blog.RouterUpdate)
+				r.With(auth.AuthenticationMiddleware).Delete("/", blog.RouterDelete)
+
+				//r.Route("/reply", func(r chi.Router) {
+				//	r.Get("/", reply.RouterList)
+				//  r.With(auth.AuthenticationMiddleware).Post("/", reply.RouterCreate)
+				//	r.Route("/{id}", func(r chi.Router) {
+				//      r.Use(auth.AuthenticationMiddleware)
+				//		r.Put("/", reply.RouterUpdate)
+				//		r.Delete("/", reply.RouterDelete)
+				//	})
+				//})
 			})
 		})
+
+		//r.Route("/tag", func(r chi.Router) {
+		//	r.Get("/", tag.RouterList)
+		//	r.With(auth.AuthenticationMiddleware).Post("/", tag.RouterCreate)
+		//
+		//	r.Route("/{tag}", func(r chi.Router) {
+		//		r.Get("/", tag.RouterRead)
+		//		r.Group(func(r chi.Router) {
+		//			r.Use(auth.AuthenticationMiddleware)
+		//			r.Put("/", tag.RouterUpdate)
+		//			r.Delete("/", tag.RouterDelete)
+		//			r.Get("/blog", tag.RouterListBlog)
+		//		})
+		//
+		//	})
+		//})
 	})
 
 	log.Printf("Running at port 80")

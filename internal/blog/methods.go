@@ -3,36 +3,77 @@ package blog
 import (
 	"database/sql"
 	"errors"
+	"go-blog/internal/config"
 	"go-blog/internal/db"
+	"go-blog/internal/tag"
 	"go-blog/pkg/utils"
+	"strings"
 )
 
-func List(cursor int) ([]Blog, error) {
+
+// Return extra
+func List(cursor int, filter BlogFilter, sortMethod BlogSortMethod) ([]BlogExtra, error) {
 	db := db.GetConnection()
 
 	var results *sql.Rows
 	var err error
 
-	queryString := "SELECT `id`, `title`, `content`, `description`, `slug`, `image`, `created_at` FROM `blogs` ORDER BY `id` DESC LIMIT 5"
-	if cursor != 0 {
-		queryString = "SELECT `id`, `title`, `content`, `description`, `slug`, `image`, `created_at` FROM `blogs` WHERE `id` < ? ORDER BY `id` DESC LIMIT 5"
-		utils.Logg(queryString)
-		results, err = db.Query(queryString, cursor)
-	} else {
-		results, err = db.Query(queryString)
+	queryString := "SELECT `b`.`id`, `b`.`title`, `b`.`content`, `b`.`description`, `b`.`slug`, `b`.`image`, `b`.`created_at`, `b`.`user_id`, `b`.`tags`, `u`.`id`, `u`.`username`, `u`.`email`, `u`.`role`, `u`.`name`  FROM `blogs` as b, `users` as u WHERE `b`.`user_id` = `u`.`id`";
+	variables := make([]interface{}, 0)
+
+	if filter.Title != nil {
+		queryString += " AND `b`.`title` LIKE '%?%'"
+		variables = append(variables, filter.Title)
 	}
+
+	if filter.UserId != 0 {
+		queryString += " AND `b`.`user_id` = ?"
+		variables = append(variables, filter.UserId)
+	}
+
+	if filter.Tags != nil {
+		for _, v := range strings.Split(*filter.Tags, ",") {
+			if v != "" {
+				queryString += " AND `b`.`tags` LIKE '%,?,%'"
+				variables = append(variables, v)
+			}
+		}
+	}
+
+	if cursor != 0 {
+		queryString += " AND `b`.`id` < ?"
+		variables = append(variables, cursor)
+	}
+
+	switch sortMethod {
+	case SortByCreatedAtAsc:
+		queryString += " ORDER BY `b`.`created_at` ASC"
+	case SortByCreatedAtDesc:
+		queryString += " ORDER BY `b`.`created_at` DESC"
+	default:
+		queryString += " ORDER BY `b`.`id` DESC"
+	}
+
+	queryString += " LIMIT ?"
+	variables = append(variables,config.GetConfig().ITEMS_PER_PAGE)
+
+	// DONE evaluating query string
+
+	utils.Logg(queryString)
+
+	results, err = db.Query(queryString, variables...)
 
 	if err != nil {
 		return nil, err
 	}
 	defer results.Close()
 
-	blogs := make([]Blog, 0)
+	blogs := make([]BlogExtra, 0)
 
 	for results.Next() {
-		var blog Blog
+		var blog BlogExtra
 
-		err = results.Scan(&blog.Id, &blog.Title, &blog.Content, &blog.Description, &blog.Slug, &blog.Image, &blog.CreatedAt)
+		err = results.Scan(&blog.Id, &blog.Title, &blog.Content, &blog.Description, &blog.Slug, &blog.Image, &blog.CreatedAt, &blog.UserId, &blog.Tags, &blog.User.Id, &blog.User.Username, &blog.User.Email, &blog.User.Role, &blog.User.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -44,13 +85,14 @@ func List(cursor int) ([]Blog, error) {
 	return blogs, nil
 }
 
-func Read(id int) (*Blog, error) {
+// Return extra
+func Read(id int) (*BlogExtra, error) {
 	db := db.GetConnection()
 
-	var blog Blog
+	var blog BlogExtra
 
-	result := db.QueryRow("SELECT `id`, `title`, `content`, `description`, `slug`, `image`, `created_at` FROM `blogs` WHERE `id` = ?", id)
-	err := result.Scan(&blog.Id, &blog.Title, &blog.Content, &blog.Description, &blog.Slug, &blog.Image, &blog.CreatedAt)
+	result := db.QueryRow("SELECT `b`.`id`, `b`.`title`, `b`.`content`, `b`.`description`, `b`.`slug`, `b`.`image`, `b`.`created_at`, `b`.`user_id`, `b`.`tags`, `u`.`id`, `u`.`username`, `u`.`email`, `u`.`role`, `u`.`name`  FROM `blogs` as b, `users` as u WHERE `b`.`user_id` = `u`.`id` AND `b`.`id` = ?", id)
+	err := result.Scan(&blog.Id, &blog.Title, &blog.Content, &blog.Description, &blog.Slug, &blog.Image, &blog.CreatedAt, &blog.UserId, &blog.Tags, &blog.User.Id, &blog.User.Username, &blog.User.Email, &blog.User.Role, &blog.User.Name)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("Invalid id.")
 	} else if err != nil {
@@ -63,9 +105,17 @@ func Read(id int) (*Blog, error) {
 func Create(blog Blog) (int64, error) {
 	db := db.GetConnection()
 
-	results, err := db.Exec("INSERT INTO `blogs` (`title`, `content`, `description`, `slug`, `image`, `created_at`) VALUES (?,?,?,?,?,?)", blog.Title, blog.Content, blog.Description, blog.Slug, blog.Image, blog.CreatedAt)
+	results, err := db.Exec("INSERT INTO `blogs` (`title`, `content`, `description`, `slug`, `image`, `created_at`, `user_id`, `tags`) VALUES (?,?,?,?,?,?)", blog.Title, blog.Content, blog.Description, blog.Slug, blog.Image, blog.CreatedAt, blog.UserId, blog.Tags)
 	if err != nil {
 		return 0, err
+	}
+
+	for _, v := range strings.Split(*blog.Tags, ",") {
+		if v != "" {
+			var newTag tag.Tag
+			newTag.Tag = &v
+			tag.Create(newTag)
+		}
 	}
 
 	lid, err := results.LastInsertId()
@@ -79,13 +129,13 @@ func Create(blog Blog) (int64, error) {
 func Update(blog Blog) error {
 	db := db.GetConnection()
 
-	_, err := db.Exec("UPDATE `blogs` SET `title` = ?, `description` = ?, `slug` = ?, `image` = ?, `content` = ?, `created_at` = ?", blog.Title, blog.Description, blog.Slug, blog.Image, blog.Content, blog.CreatedAt)
+	_, err := db.Exec("UPDATE `blogs` SET `title` = ?, `description` = ?, `slug` = ?, `image` = ?, `content` = ?, `created_at` = ?, `user_id` = ?, `tags` = ? WHERE `id` = ?", blog.Title, blog.Description, blog.Slug, blog.Image, blog.Content, blog.CreatedAt, blog.UserId, blog.Tags, blog.Id)
 	return err
 }
 
 func Delete(id int64) error {
 	db := db.GetConnection()
 
-	_, err := db.Exec("DELETE FROM `blogs` WHERE `ID` = ?", id)
+	_, err := db.Exec("DELETE FROM `blogs` WHERE `id` = ?", id)
 	return err
 }

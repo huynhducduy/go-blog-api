@@ -13,6 +13,11 @@ type Config struct {
 	DB_PASS string
 	DB_NAME string
 	SECRET  string
+	AWS_ACCESS_KEY_ID string
+	AWS_SECRET_ACCESS_KEY string
+	AWS_S3_BUCKET_NAME string
+	FIREBASE_PRIVATEKEY string
+	ITEMS_PER_PAGE int64
 }
 
 var config Config

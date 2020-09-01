@@ -2,6 +2,7 @@ package blog
 
 import (
 	"encoding/json"
+	"go-blog/internal/user"
 	"go-blog/pkg/utils"
 	"io/ioutil"
 	"net/http"
@@ -18,7 +19,7 @@ func RouterList(w http.ResponseWriter, r *http.Request) {
 	cursor := 0
 	var err error
 
-	if ok && len(cursors) > 0 {
+	if ok && len(cursors) > 0 && cursors[0] != ""{
 		cursor, err = strconv.Atoi(cursors[0])
 		if err != nil {
 			utils.ResponseMessage(w, http.StatusBadRequest, "Cursor must be a number!")
@@ -26,7 +27,24 @@ func RouterList(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	data, err := List(cursor)
+	var filter BlogFilter
+	var sortMethod BlogSortMethod
+
+	tags, ok := r.URL.Query()["tag"]
+	if ok && len(tags) > 0 && tags[0] != "" {
+		filter.Tags = &tags[0]
+	}
+	userIds, ok := r.URL.Query()["user_id"]
+	if ok && len(userIds) > 0 && userIds[0] != "" {
+		if userId, err := strconv.ParseInt(userIds[0], 10, 64); err == nil {
+			filter.UserId = userId
+		} else {
+			utils.ResponseMessage(w, http.StatusBadRequest, "User's ID must be a number!")
+		}
+
+	}
+
+	data, err := List(cursor, filter, sortMethod)
 	if err != nil {
 		utils.ResponseInternalError(w, err)
 		return
@@ -46,7 +64,11 @@ func RouterCreate(w http.ResponseWriter, r *http.Request) {
 	var newBlog Blog
 	json.Unmarshal(reqBody, &newBlog)
 
-	*newBlog.CreatedAt = int64(time.Now().Unix())
+	now := int64(time.Now().Unix())
+	newBlog.CreatedAt = &now
+
+	usr := r.Context().Value("user").(*user.User)
+	newBlog.UserId = usr.Id
 
 	id, err := Create(newBlog)
 	if err != nil {
