@@ -2,7 +2,6 @@ package blog
 
 import (
 	"database/sql"
-	"errors"
 	"go-blog/internal/config"
 	"go-blog/internal/db"
 	"go-blog/internal/tag"
@@ -79,6 +78,11 @@ func List(cursor int, filter BlogFilter, sortMethod BlogSortMethod) ([]BlogExtra
 			return nil, err
 		}
 
+		if blog.Tags != nil {
+			var newTags = strings.Trim(*blog.Tags, ",")
+			blog.Tags = &newTags
+		}
+
 		blogs = append(blogs, blog)
 
 	}
@@ -94,10 +98,13 @@ func Read(id int) (*BlogExtra, error) {
 
 	result := db.QueryRow("SELECT `b`.`id`, `b`.`title`, `b`.`content`, `b`.`description`, `b`.`slug`, `b`.`image`, `b`.`created_at`, `b`.`user_id`, `b`.`tags`, `u`.`id`, `u`.`username`, `u`.`email`, `u`.`role`, `u`.`name`  FROM `blogs` as b, `users` as u WHERE `b`.`user_id` = `u`.`id` AND `b`.`id` = ?", id)
 	err := result.Scan(&blog.Id, &blog.Title, &blog.Content, &blog.Description, &blog.Slug, &blog.Image, &blog.CreatedAt, &blog.UserId, &blog.Tags, &blog.User.Id, &blog.User.Username, &blog.User.Email, &blog.User.Role, &blog.User.Name)
-	if err == sql.ErrNoRows {
-		return nil, errors.New("Invalid id.")
-	} else if err != nil {
+	if err != nil {
 		return nil, err
+	}
+
+	if blog.Tags != nil {
+		var newTags = strings.Trim(*blog.Tags, ",")
+		blog.Tags = &newTags
 	}
 
 	return &blog, err
@@ -106,19 +113,23 @@ func Read(id int) (*BlogExtra, error) {
 func Create(blog Blog) (int64, error) {
 	db := db.GetConnection()
 
-	var newTags = "," + strings.Trim(*blog.Tags,",") + ","
-	blog.Tags = &newTags
+	if blog.Tags != nil {
+		var newTags = "," + strings.Trim(*blog.Tags,",") + ","
+		blog.Tags = &newTags
+	}
 
-	results, err := db.Exec("INSERT INTO `blogs` (`title`, `content`, `description`, `slug`, `image`, `created_at`, `user_id`, `tags`) VALUES (?,?,?,?,?,?)", blog.Title, blog.Content, blog.Description, blog.Slug, blog.Image, blog.CreatedAt, blog.UserId, blog.Tags)
+	results, err := db.Exec("INSERT INTO `blogs` (`title`, `content`, `description`, `slug`, `image`, `created_at`, `user_id`, `tags`) VALUES (?,?,?,?,?,?,?,?)", blog.Title, blog.Content, blog.Description, blog.Slug, blog.Image, blog.CreatedAt, blog.UserId, blog.Tags)
 	if err != nil {
 		return 0, err
 	}
 
-	for _, v := range strings.Split(*blog.Tags, ",") {
-		if v != "" {
-			var newTag tag.Tag
-			newTag.Tag = &v
-			tag.Create(newTag)
+	if blog.Tags != nil {
+		for _, v := range strings.Split(*blog.Tags, ",") {
+			if v != "" {
+				var newTag tag.Tag
+				newTag.Tag = &v
+				tag.Create(newTag)
+			}
 		}
 	}
 
@@ -136,7 +147,7 @@ func Update(blog Blog) error {
 	var newTags = "," + strings.Trim(*blog.Tags,",") + ","
 	blog.Tags = &newTags
 
-	_, err := db.Exec("UPDATE `blogs` SET `title` = ?, `description` = ?, `slug` = ?, `image` = ?, `content` = ?, `created_at` = ?, `user_id` = ?, `tags` = ? WHERE `id` = ?", blog.Title, blog.Description, blog.Slug, blog.Image, blog.Content, blog.CreatedAt, blog.UserId, blog.Tags, blog.Id)
+	_, err := db.Exec("UPDATE `blogs` SET `title` = ?, `description` = ?, `slug` = ?, `image` = ?, `content` = ?, `tags` = ? WHERE `id` = ?", blog.Title, blog.Description, blog.Slug, blog.Image, blog.Content, blog.Tags, blog.Id)
 	return err
 }
 

@@ -3,8 +3,6 @@ package tag
 import (
 	"database/sql"
 	"go-blog/internal/db"
-	"errors"
-
 )
 
 func List() ([]Tag, error) {
@@ -40,7 +38,8 @@ func Read(tag string) (*Tag, error) {
 	results := db.QueryRow("SELECT `tag`, `title`, `description` FROM `tags` WHERE `tag` = ?", tag)
 	err := results.Scan(&emp.Tag, &emp.Title, &emp.Description)
 	if err == sql.ErrNoRows {
-		return nil, errors.New("Invalid tag.")
+		emp.Tag = &tag
+		return &emp, nil
 	} else if err != nil {
 		return nil, err
 	}
@@ -48,10 +47,11 @@ func Read(tag string) (*Tag, error) {
 	return &emp, nil
 }
 
+// Create or not -> using when create blog
 func Create(tag Tag) (error) {
 	db := db.GetConnection()
 
-	_, err := db.Exec("INSERT INTO `tags` (`tag`, `title`, `description`) VALUES (?,?,?)", tag.Tag, tag.Title, tag.Description)
+	_, err := db.Exec("INSERT INTO `tags` (`tag`, `title`, `description`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE tag = ?", tag.Tag, tag.Title, tag.Description, tag.Tag)
 	if err != nil {
 		return err
 	}
@@ -59,10 +59,11 @@ func Create(tag Tag) (error) {
 	return nil
 }
 
+// Update or create
 func Update(tag Tag) error {
 	db := db.GetConnection()
 
-	_, err := db.Exec("UPDATE `tags` SET `title` = ?, `description` = ? WHERE `tag` = ?", tag.Title, tag.Description, tag.Tag)
+	_, err := db.Exec("INSERT INTO `tags` (`tag`, `title`, `description`) VALUES (?,?,?) ON DUPLICATE KEY UPDATE `title` = ?, `description` = ?", tag.Tag, tag.Title, tag.Description, tag.Title, tag.Description)
 	return err
 }
 

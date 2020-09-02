@@ -1,6 +1,7 @@
 package blog
 
 import (
+	"database/sql"
 	"encoding/json"
 	"go-blog/internal/user"
 	"go-blog/pkg/utils"
@@ -89,7 +90,10 @@ func RouterRead(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data, err := Read(blogIdNum)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		utils.ResponseMessage(w, http.StatusBadRequest, "Invalid Blog ID!")
+		return
+	} else if err != nil {
 		utils.ResponseInternalError(w, err)
 		return
 	}
@@ -119,7 +123,7 @@ func RouterUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.Response(w, http.StatusOK, nil)
+	utils.ResponseMessage(w, http.StatusOK, "Update blog success!")
 }
 
 func RouterDelete(w http.ResponseWriter, r *http.Request) {

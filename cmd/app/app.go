@@ -3,6 +3,8 @@ package app
 import (
 	"go-blog/internal/auth"
 	"go-blog/internal/blog"
+	"go-blog/internal/tag"
+
 	//"go-blog/internal/tag"
 	"go-blog/internal/user"
 	//"go-blog/internal/blog/reply"
@@ -82,21 +84,20 @@ func Run() error {
 			})
 		})
 
-		//r.Route("/tag", func(r chi.Router) {
-		//	r.Get("/", tag.RouterList)
-		//	r.With(auth.AuthenticationMiddleware).Post("/", tag.RouterCreate)
-		//
-		//	r.Route("/{tag}", func(r chi.Router) {
-		//		r.Get("/", tag.RouterRead)
-		//		r.Group(func(r chi.Router) {
-		//			r.Use(auth.AuthenticationMiddleware)
-		//			r.Put("/", tag.RouterUpdate)
-		//			r.Delete("/", tag.RouterDelete)
-		//			r.Get("/blog", tag.RouterListBlog)
-		//		})
-		//
-		//	})
-		//})
+		r.Route("/tag", func(r chi.Router) {
+			r.Get("/", tag.RouterList)
+			//r.With(auth.AuthenticationMiddleware).Post("/", tag.RouterCreate)
+
+			r.Route("/{tag}", func(r chi.Router) {
+				r.Get("/", tag.RouterRead)
+				r.Group(func(r chi.Router) {
+					r.Use(auth.AuthenticationMiddleware)
+					r.Put("/", tag.RouterUpdate)
+			//		r.Delete("/", tag.RouterDelete)
+			//		r.Get("/blog", tag.RouterListBlog)
+				})
+			})
+		})
 	})
 
 	log.Printf("Running at port 80")
