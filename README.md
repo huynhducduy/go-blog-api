@@ -2,7 +2,7 @@
 
 Built on top of Golang with the help of `go-chi`, `go-jwt`, `mysql`, `aws-sdk-go`
 
-API specification can be found at `Insomnia_2020-09-03.json`
+API specification can be found at `Insomnia.json`
 
 Database Schema can be found at `blog.sql`
 
