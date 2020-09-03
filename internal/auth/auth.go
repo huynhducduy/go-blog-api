@@ -215,6 +215,28 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	var newUser user.User
 	json.Unmarshal(reqBody, &newUser)
 
+	if newUser.Username == nil || *newUser.Username == "" {
+		utils.ResponseMessage(w, http.StatusBadRequest, "Username cannot be empty!")
+		return
+	}
+
+	if newUser.Name == nil || *newUser.Name == "" {
+		utils.ResponseMessage(w, http.StatusBadRequest, "Name cannot be empty!")
+		return
+	}
+
+	if newUser.Email == nil || *newUser.Email == "" {
+		utils.ResponseMessage(w, http.StatusBadRequest, "Email cannot be empty!")
+		return
+	}
+
+	if newUser.Password == nil || *newUser.Password == "" {
+		utils.ResponseMessage(w, http.StatusBadRequest, "Password cannot be empty!")
+		return
+	}
+
+
+
 	newUser.Role = nil
 	newPassword := hashAndSalt(*newUser.Password)
 	newUser.Password = &newPassword
