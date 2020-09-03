@@ -9,6 +9,7 @@ pipeline {
         stage('build') {
             steps {
                 sh 'sudo cp /home/ubuntu/go-blog.env .env'
+                sh 'cat .env'
                 sh 'sudo docker build -t go-blog .'
             }
         }
