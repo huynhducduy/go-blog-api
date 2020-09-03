@@ -8,7 +8,7 @@ pipeline {
         }
         stage('build') {
             steps {
-                sh 'sudo cp ~/go-blog.env .env'
+                sh 'sudo cp /home/ubuntu/go-blog.env .env'
                 sh 'sudo docker build -t go-blog .'
             }
         }
@@ -19,7 +19,7 @@ pipeline {
         }
         stage('prepare to deploy') {
             steps {
-                sh '(sudo docker kill go-blog || true) && sudo docker rm go-blog'
+                sh '(sudo docker kill go-blog || true) && (sudo docker rm go-blog || true)'
             }
         }
         stage('deploy') {
