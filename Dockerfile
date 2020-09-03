@@ -22,3 +22,4 @@ ENTRYPOINT ["./go-blog"]
 
 # sudo docker build -t go-blog .
 # sudo docker run -dit -p 80:80 --name go-blog go-blog:latest
+# (sudo docker kill go-blog || true) && sudo docker rm go-blog

@@ -19,7 +19,7 @@ pipeline {
         }
         stage('prepare to deploy') {
             steps {
-                sh 'sudo docker kill go-blog && sudo docker rm go-blog'
+                sh '(sudo docker kill go-blog || true) && sudo docker rm go-blog'
             }
         }
         stage('deploy') {
