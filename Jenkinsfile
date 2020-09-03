@@ -8,7 +8,7 @@ pipeline {
         }
         stage('build') {
             steps {
-                sh 'sudo cp /home/duuuuuuuuy/go-blog.env .env'
+                sh 'sudo cp ~/go-blog.env .env'
                 sh 'sudo docker build -t go-blog .'
             }
         }
