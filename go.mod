@@ -11,6 +11,6 @@ require (
 	github.com/json-iterator/go v1.1.9
 	github.com/sirupsen/logrus v1.6.0
 	github.com/spf13/viper v1.7.0
-	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5
+	golang.org/x/crypto v0.1.0
 	google.golang.org/api v0.13.0
 )
